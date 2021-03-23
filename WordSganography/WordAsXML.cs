@@ -39,19 +39,19 @@ namespace WordSganography
             return newPath;
         }
 
-        public string InsertMessageToFile(string FilePathStr)
+        public string InsertMessageToFile(string FilePathStr, BitArray message)
         {
+            int counter = 0;
 
             using (WordprocessingDocument doc = WordprocessingDocument.Open(FilePathStr, true))
             {
                 Body mainPart = doc.MainDocumentPart.Document.Body;
-
                 var runs = mainPart.Descendants<Run>().ToList();
 
                 foreach (Run run in runs)
                 {
                     var text = run.GetFirstChild<Text>();
-                    if (text.Text != null)
+                    if (text.Text != null & text.Text!=" ")
                     {
                         string[] words = text.Text.Split(' ');
                         for (int i = 0; i < words.Count(); i++)
@@ -67,7 +67,20 @@ namespace WordSganography
                             string space = (i < words.Count() ? " " : "");
 
                             RunProperties runProperties = new RunProperties();
-                            runProperties.AppendChild(new Position() { Val = "4" });
+                            if (counter < message.Count)
+                            {
+                                if (message.Get(counter))
+                                {
+                                    runProperties.AppendChild(new Position() { Val = "2" });
+                                    counter++;
+                                }
+                                else
+                                {
+                                    runProperties.AppendChild(new Position() { Val = "-2" });
+                                    counter++;
+                                }
+                            }
+
                             runProperties.AppendChild(new Languages() { Val = "ru-RU" });
                             newSpaceRun.AppendChild(runProperties);
                             Text newSpace = newSpaceRun.AppendChild(new Text(space));
@@ -86,7 +99,27 @@ namespace WordSganography
 
         public string GetMessageFromFile(string FilePathStr)
         {
-            return null;
+            string result="";
+            string lastResult = "";
+            using (WordprocessingDocument doc = WordprocessingDocument.Open(FilePathStr, true))
+            {
+                Body body = doc.MainDocumentPart.Document.Body;
+                foreach(Run item in body.Descendants<Run>().ToList())
+                {
+                    if(item.InnerText==" " & item.GetFirstChild<RunProperties>().GetFirstChild<Position>()!=null )
+                    {
+                        if(item.GetFirstChild<RunProperties>().GetFirstChild<Position>().Val=="2")
+                            result +="1";
+                        else
+                        {
+                            result += "0";
+                        }
+                    }
+                }
+                var bitArr = new BitArray(result.Select(c => c == '1').ToArray());
+                lastResult = ByteArrayToMessage(bitArr);
+            }
+            return lastResult;
         }
 
         public BitArray MessageToByteArray(string message)

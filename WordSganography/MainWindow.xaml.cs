@@ -22,12 +22,17 @@ namespace WordSganography
     public partial class MainWindow : Window
     {
         public static string FilePathStr { get; set; }
+        public static string encodedFilePathStr { get; set; }
         public static string CopyPathStr { get; set; }
         public static int ContainerSize { get; set; }
         public static int MessageSize { get; set; }
         public static int BitHashSize { get; set; }
         public static string Hash { get; set; }
         public static BitArray BitHash { get; set; }
+        public static BitArray BitMessage { get; set; }
+        public static string MessageAndHash { get; set; }
+        public static BitArray BitMessageAndHash { get; set; }
+
 
         public MainWindow()
         {
@@ -66,29 +71,77 @@ namespace WordSganography
 
                 Hash = helper.HashCounter(messageField.Text);
                 hashField.Text = Hash;
-                BitHash = helper.MessageToByteArray(Hash);
-                BitHashSize = BitHash.Length;
 
-                BitArray res = helper.MessageToByteArray(messageField.Text);
-                MessageSize = res.Length;
+                MessageAndHash = messageField.Text + " " + Hash;
+                BitMessageAndHash = helper.MessageToByteArray(MessageAndHash);
 
-                if (ContainerSize >= BitHashSize + MessageSize)
+
+                //foreach(bool item in BitMessage)
+                //{
+                //    if (item)
+                //        statusField.Text += "1";
+                //    else
+                //        statusField.Text += "0";
+                //}
+                if (ContainerSize >= BitMessageAndHash.Count)
                 {
-                    helper.InsertMessageToFile(FilePathStr);
+                    helper.InsertMessageToFile(FilePathStr, BitMessageAndHash);
                 }
                 else
                 {
-                    statusField.Text = "В контейнере не достаточно места \n";
+                    statusField.Text += "В контейнере не достаточно места \n";
                 }
             }
             catch
             {
-                statusField.Text = "Hash вычислен с ошибкой \n";
+                statusField.Text += "Hash вычислен с ошибкой \n";
             }
             finally
             {
-                statusField.Text += "Конец осаждения сообщения \n";
+                statusField.Text += "\n Конец осаждения сообщения \n";
             }
+        }
+
+        private void Button_Click_2(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                OpenFileDialog FileDialog = new OpenFileDialog();
+                if (FileDialog.ShowDialog() == true)
+                    encodedFilePathStr = FileDialog.FileName;
+                outputFilePath.Text = encodedFilePathStr;
+                WordAsXML helper = new WordAsXML();
+                
+            }
+            catch
+            {
+
+            }
+            finally
+            {
+
+            }
+        }
+
+        private void Button_Click_3(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                WordAsXML helper = new WordAsXML();
+                string result = helper.GetMessageFromFile(encodedFilePathStr);
+                statusField.Text = result;
+
+            }
+            catch
+            {
+
+            }
+            finally
+            {
+
+            }
+
+
         }
     }
 }
