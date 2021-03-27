@@ -8,6 +8,8 @@ using DocumentFormat.OpenXml.Wordprocessing;
 using System.Security.Cryptography;
 using System.Collections;
 using DocumentFormat.OpenXml;
+using System.IO;
+using Microsoft.Office.Interop.Word;
 
 namespace WordSganography
 {
@@ -19,24 +21,101 @@ namespace WordSganography
 
         public string CreateDocCopy(string FilePathStr)
         {
-            string newPath = "";
-            string withoutEnd = "";
-            if (FilePathStr[FilePathStr.Length-1].Equals('x'))
+            string sourceFile = FilePathStr;
+            string destinationFile;
+            if (FilePathStr.ToLower().EndsWith(".doc"))
             {
-                withoutEnd += FilePathStr.Substring(0, FilePathStr.Length - 5);
-                newPath += withoutEnd + "_new.docx";
+                 destinationFile = FilePathStr.Replace(".doc", "v2.doc");
             }
-            if (FilePathStr[FilePathStr.Length-1].Equals('c'))
+            else
             {
-                withoutEnd += FilePathStr.Substring(0, FilePathStr.Length - 4);
-                newPath += withoutEnd + "_new.doc";
+                 destinationFile = FilePathStr.Replace(".docx", "v2.docx");
             }
-            using (WordprocessingDocument doc = WordprocessingDocument.Open(FilePathStr, true))
+            try
             {
-                doc.SaveAs(newPath);
-                doc.Close();
+                File.Copy(sourceFile, destinationFile, true);
             }
-            return newPath;
+            catch (IOException iox)
+            {
+                Console.WriteLine(iox.Message);
+            }
+            return destinationFile;
+        }
+
+        public bool ValidateFile(string FilePathStr)
+        {
+            if (FilePathStr.ToLower().EndsWith(".doc"))
+                return true;
+            else
+                return false;
+        }
+
+        public string ConvertDocxToDoc(string FilePathStr)
+        {
+            Application word = new Application();
+            string newFileName = null;
+            if (FilePathStr.ToLower().EndsWith(".docx"))
+            {
+                var sourceFile = new FileInfo(FilePathStr);
+                try
+                {
+                    var document = word.Documents.Open(sourceFile.FullName);
+
+                    newFileName = sourceFile.FullName.Replace(".docx", ".doc");
+                    document.SaveAs2(newFileName, WdSaveFormat.wdFormatDocumentDefault,
+                                     CompatibilityMode: WdCompatibilityMode.wdCurrent);
+
+                }
+                catch
+                {
+
+                }
+                finally
+                {
+                    word.ActiveDocument.Close();
+                    word.Quit();
+                    File.Delete(FilePathStr);
+                }
+                return newFileName;
+            }
+            else
+            {
+                throw new Exception("Convert .docx to .doc failed");
+            }
+        }
+
+        public string ConvertDocToDocx(string FilePathStr)
+        {
+            Application word = new Application();
+            string newFileName = null;
+            if (FilePathStr.ToLower().EndsWith(".doc"))
+            {
+                var sourceFile = new FileInfo(FilePathStr);
+                try
+                {
+                    var document = word.Documents.Open(sourceFile.FullName);
+
+                    newFileName = sourceFile.FullName.Replace(".doc", ".docx");
+                    document.SaveAs2(newFileName, WdSaveFormat.wdFormatXMLDocument, ReadOnlyRecommended: false,
+                                     CompatibilityMode: WdCompatibilityMode.wdWord2010);
+                }
+                catch
+                {
+
+                }
+                finally
+                {
+                    word.ActiveDocument.Close();
+                    word.Quit();
+                }
+                File.Delete(FilePathStr);
+
+                return newFileName;
+            }
+            else
+            {
+                throw new Exception("Convert .doc to .docx failed");
+            }
         }
 
         public string InsertMessageToFile(string FilePathStr, BitArray message)
@@ -51,45 +130,50 @@ namespace WordSganography
                 foreach (Run run in runs)
                 {
                     var text = run.GetFirstChild<Text>();
-                    if (text.Text != null & text.Text!=" ")
+                    if (text != null)
                     {
-                        string[] words = text.Text.Split(' ');
-                        for (int i = 0; i < words.Count(); i++)
+                        if (text.Text != null & text.Text != " ")
                         {
-                            string word = words[i];
-                            var newRun = (Run)run.Clone();
-                            string newWord = word;
-                            Text newRunText = newRun.GetFirstChild<Text>();
-                            newRunText.Text = newWord;
-                            run.Parent.InsertBefore(newRun, run);
-
-                            Run newSpaceRun = new Run();
-                            string space = (i < words.Count() ? " " : "");
-
-                            RunProperties runProperties = new RunProperties();
-                            if (counter < message.Count)
+                            string[] words = text.Text.Split(' ');
+                            for (int i = 0; i < words.Count(); i++)
                             {
-                                if (message.Get(counter))
+                                string word = words[i];
+                                var newRun = (Run)run.Clone();
+                                string newWord = word;
+                                Text newRunText = newRun.GetFirstChild<Text>();
+                                newRunText.Text = newWord;
+                                run.Parent.InsertBefore(newRun, run);
+
+                                Run newSpaceRun = new Run();
+                                string space = (i < words.Count() - 1 ? " " : "");
+                                RunProperties runProperties = new RunProperties();
+                                if (space == " ")
                                 {
-                                    runProperties.AppendChild(new Position() { Val = "2" });
-                                    counter++;
+                                    if (counter < message.Count)
+                                    {
+                                        if (message.Get(counter))
+                                        {
+                                            runProperties.AppendChild(new Position() { Val = "2" });
+                                            counter++;
+                                        }
+                                        else
+                                        {
+                                            runProperties.AppendChild(new Position() { Val = "-2" });
+                                            counter++;
+                                        }
+                                    }
                                 }
-                                else
-                                {
-                                    runProperties.AppendChild(new Position() { Val = "-2" });
-                                    counter++;
-                                }
+                                runProperties.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Languages() { Val = "ru-RU" });
+                                newSpaceRun.AppendChild(runProperties);
+                                Text newSpace = newSpaceRun.AppendChild(new Text(space));
+                                newSpace.Space = SpaceProcessingModeValues.Preserve;
+                                run.Parent.InsertBefore(newSpaceRun, run);
                             }
-
-                            runProperties.AppendChild(new Languages() { Val = "ru-RU" });
-                            newSpaceRun.AppendChild(runProperties);
-                            Text newSpace = newSpaceRun.AppendChild(new Text(space));
-                            newSpace.Space = SpaceProcessingModeValues.Preserve;
-
-                            run.Parent.InsertBefore(newSpaceRun, run);
+                            run.Remove();
                         }
-                        run.Remove();
                     }
+                    if (counter >= message.Count)
+                        break;
                 }
                 doc.Save();
                 doc.Close();
@@ -106,15 +190,21 @@ namespace WordSganography
                 Body body = doc.MainDocumentPart.Document.Body;
                 foreach(Run item in body.Descendants<Run>().ToList())
                 {
-                    if(item.InnerText==" " & item.GetFirstChild<RunProperties>().GetFirstChild<Position>()!=null )
-                    {
-                        if(item.GetFirstChild<RunProperties>().GetFirstChild<Position>().Val=="2")
-                            result +="1";
-                        else
-                        {
-                            result += "0";
+                    if(item.InnerText==" " & item.GetFirstChild<RunProperties>()!=null )
+                        if(item.GetFirstChild<RunProperties>().GetFirstChild<Position>() != null) {
+                            {
+                                if (item.GetFirstChild<RunProperties>().GetFirstChild<Position>().Val == "2")
+                                    result += "1";
+                                else if (item.GetFirstChild<RunProperties>().GetFirstChild<Position>().Val == "-2")
+                                {
+                                    result += "0";
+                                }
+                                else
+                                {
+                                    break;
+                                }
+                            }
                         }
-                    }
                 }
                 var bitArr = new BitArray(result.Select(c => c == '1').ToArray());
                 lastResult = ByteArrayToMessage(bitArr);

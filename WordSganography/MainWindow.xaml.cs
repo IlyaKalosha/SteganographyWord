@@ -21,6 +21,8 @@ namespace WordSganography
 
     public partial class MainWindow : Window
     {
+        public static bool isFileDoc { get; set; }
+
         public static string FilePathStr { get; set; }
         public static string encodedFilePathStr { get; set; }
         public static string CopyPathStr { get; set; }
@@ -43,11 +45,21 @@ namespace WordSganography
         {
             try
             {
+                //open file from a directory
                 OpenFileDialog FileDialog = new OpenFileDialog();
                 if (FileDialog.ShowDialog() == true)
                     FilePathStr = FileDialog.FileName;
                     FilePath.Text = FilePathStr;
+
+                //create a work copy and validate .doc/.docx
                 WordAsXML helper = new WordAsXML();
+                FilePathStr = helper.CreateDocCopy(FilePathStr);
+                isFileDoc = helper.ValidateFile(FilePathStr);
+                if (isFileDoc)
+                {
+                    FilePathStr = helper.ConvertDocToDocx(FilePathStr);
+                }
+                //count file spaces and print the result
                 ContainerSize = helper.ContainerSize(FilePathStr);
                 containerSizeField.Text = ContainerSize.ToString();
             }
@@ -74,27 +86,23 @@ namespace WordSganography
 
                 MessageAndHash = messageField.Text + " " + Hash;
                 BitMessageAndHash = helper.MessageToByteArray(MessageAndHash);
-
-
-                //foreach(bool item in BitMessage)
-                //{
-                //    if (item)
-                //        statusField.Text += "1";
-                //    else
-                //        statusField.Text += "0";
-                //}
                 if (ContainerSize >= BitMessageAndHash.Count)
                 {
                     helper.InsertMessageToFile(FilePathStr, BitMessageAndHash);
+                    if (isFileDoc)
+                    {
+                        helper.ConvertDocxToDoc(FilePathStr);
+                        isFileDoc = false;
+                    }
                 }
                 else
                 {
                     statusField.Text += "В контейнере не достаточно места \n";
                 }
             }
-            catch
+            catch (Exception em)
             {
-                statusField.Text += "Hash вычислен с ошибкой \n";
+                statusField.Text += em.Message + "\n";
             }
             finally
             {
@@ -110,8 +118,7 @@ namespace WordSganography
                 if (FileDialog.ShowDialog() == true)
                     encodedFilePathStr = FileDialog.FileName;
                 outputFilePath.Text = encodedFilePathStr;
-                WordAsXML helper = new WordAsXML();
-                
+                WordAsXML helper = new WordAsXML();   
             }
             catch
             {
@@ -129,7 +136,12 @@ namespace WordSganography
             {
                 WordAsXML helper = new WordAsXML();
                 string result = helper.GetMessageFromFile(encodedFilePathStr);
-                statusField.Text = result;
+                var lastSpacePos = result.LastIndexOf(' ');
+                string message = result.Substring(0, lastSpacePos);
+                string hash = result.Substring(lastSpacePos+1, result.Length-lastSpacePos-1);
+                outputMessageField.Text = message;
+                outputHashField.Text = hash;
+                controlHashField.Text = helper.HashCounter(message);
 
             }
             catch
@@ -140,8 +152,6 @@ namespace WordSganography
             {
 
             }
-
-
         }
     }
 }
