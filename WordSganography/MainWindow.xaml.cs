@@ -47,6 +47,7 @@ namespace WordSganography
             {
                 //open file from a directory
                 OpenFileDialog FileDialog = new OpenFileDialog();
+                FileDialog.Filter = "Word File (.docx ,.doc)|*.docx;*.doc";
                 if (FileDialog.ShowDialog() == true)
                     FilePathStr = FileDialog.FileName;
                     FilePath.Text = FilePathStr;
@@ -63,13 +64,9 @@ namespace WordSganography
                 ContainerSize = helper.ContainerSize(FilePathStr);
                 containerSizeField.Text = ContainerSize.ToString();
             }
-            catch
+            catch (Exception ex)
             {
-
-            }
-            finally
-            {
-
+                statusField.Text +=ex.Message + "\n";
             }
         }
 
@@ -94,19 +91,16 @@ namespace WordSganography
                         helper.ConvertDocxToDoc(FilePathStr);
                         isFileDoc = false;
                     }
+                    statusField.Text = "Сообщение осаждено\n";
                 }
                 else
                 {
-                    statusField.Text += "В контейнере не достаточно места \n";
+                    throw new Exception("В контейнере не достаточно места");
                 }
             }
-            catch (Exception em)
+            catch (Exception ex)
             {
-                statusField.Text += em.Message + "\n";
-            }
-            finally
-            {
-                statusField.Text += "\n Конец осаждения сообщения \n";
+                statusField.Text +=ex.Message + "\n";
             }
         }
 
@@ -115,19 +109,16 @@ namespace WordSganography
             try
             {
                 OpenFileDialog FileDialog = new OpenFileDialog();
+                FileDialog.Filter = "Word File (.docx ,.doc)|*.docx;*.doc";
                 if (FileDialog.ShowDialog() == true)
                     encodedFilePathStr = FileDialog.FileName;
                 outputFilePath.Text = encodedFilePathStr;
-                WordAsXML helper = new WordAsXML();   
             }
-            catch
+            catch (Exception ex)
             {
-
+                statusField.Text +=ex.Message + "\n";
             }
-            finally
-            {
 
-            }
         }
 
         private void Button_Click_3(object sender, RoutedEventArgs e)
@@ -136,21 +127,24 @@ namespace WordSganography
             {
                 WordAsXML helper = new WordAsXML();
                 string result = helper.GetMessageFromFile(encodedFilePathStr);
-                var lastSpacePos = result.LastIndexOf(' ');
-                string message = result.Substring(0, lastSpacePos);
-                string hash = result.Substring(lastSpacePos+1, result.Length-lastSpacePos-1);
-                outputMessageField.Text = message;
-                outputHashField.Text = hash;
-                controlHashField.Text = helper.HashCounter(message);
-
+                if (result != null)
+                {
+                    var lastSpacePos = result.LastIndexOf(' ');
+                    string message = result.Substring(0, lastSpacePos);
+                    string hash = result.Substring(lastSpacePos + 1, result.Length - lastSpacePos - 1);
+                    outputMessageField.Text = message;
+                    outputHashField.Text = hash;
+                    controlHashField.Text = helper.HashCounter(message);
+                    statusField.Text += "Сообщение извлечено" + "\n";
+                }
+                else
+                {
+                    throw new Exception("Сообщение не было извлечено");
+                }
             }
-            catch
+            catch(Exception ex)
             {
-
-            }
-            finally
-            {
-
+                statusField.Text +=ex.Message + "\n";   
             }
         }
     }

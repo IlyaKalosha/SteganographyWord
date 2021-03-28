@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:WordSganography"
         mc:Ignorable="d"
         Title="Стеганография Word" Height="555" Width="550"
-        ResizeMode="NoResize">
+        ResizeMode="NoResize" Icon="/Icons/AppIcon3.ico">
     <Grid>
         <Label Content="Осаждение сообщения" Height="30" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,20,0,0" FontSize="14"></Label>
         <Label Content="Контейнер:" HorizontalAlignment="Left" Margin="20, 60" Width="70" Height="30"  HorizontalContentAlignment="Left" VerticalContentAlignment="Center" VerticalAlignment="Top"/>
@@ -37,6 +37,6 @@
             <TextBlock TextWrapping="Wrap" Text="Извлечь сообщение" VerticalAlignment="center" HorizontalAlignment="Center" TextAlignment="Center"/>
         </Button>
 
-        <TextBox Name="statusField" HorizontalAlignment="Left" Margin="20,0,20,20" TextWrapping="NoWrap" VerticalAlignment="Bottom" Height="100" Width="500"  Background="Black" Text="" Foreground="#FF00FF0C" FontSize="14" Padding="5"></TextBox>
+        <TextBox Name="statusField" HorizontalAlignment="Left" Margin="20,0,20,20" TextWrapping="Wrap" VerticalAlignment="Bottom" Height="100" Width="500"  Background="Black" Text="" Foreground="#FF00FF0C" FontSize="14" Padding="5"></TextBox>
     </Grid>
 </Window>
