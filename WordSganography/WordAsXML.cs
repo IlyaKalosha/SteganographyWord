@@ -68,7 +68,7 @@ namespace WordSganography
                 }
                 catch
                 {
-
+                    
                 }
                 finally
                 {
@@ -97,7 +97,7 @@ namespace WordSganography
 
                     newFileName = sourceFile.FullName.Replace(".doc", ".docx");
                     document.SaveAs2(newFileName, WdSaveFormat.wdFormatXMLDocument, ReadOnlyRecommended: false,
-                                     CompatibilityMode: WdCompatibilityMode.wdWord2010);
+                                     CompatibilityMode: WdCompatibilityMode.wdWord2013);
                 }
                 catch
                 {
@@ -118,7 +118,7 @@ namespace WordSganography
             }
         }
 
-        public string InsertMessageToFile(string FilePathStr, BitArray message)
+        public string InsertMessageToFile(string FilePathStr, BitArray message, bool isHashNeed)
         {
             int counter = 0;
 

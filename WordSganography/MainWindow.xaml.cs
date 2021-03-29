@@ -54,7 +54,10 @@ namespace WordSganography
 
                 //create a work copy and validate .doc/.docx
                 WordAsXML helper = new WordAsXML();
-                FilePathStr = helper.CreateDocCopy(FilePathStr);
+                if (isCopyNeed.IsChecked == true)
+                {
+                    FilePathStr = helper.CreateDocCopy(FilePathStr);
+                }
                 isFileDoc = helper.ValidateFile(FilePathStr);
                 if (isFileDoc)
                 {
@@ -77,15 +80,24 @@ namespace WordSganography
                 statusField.Text = "";
 
                 WordAsXML helper = new WordAsXML();
+                if (isHashNeed.IsChecked == true)
+                {
+                    Hash = helper.HashCounter(messageField.Text);
+                    hashField.Text = Hash;
+                    MessageAndHash = messageField.Text + " " + Hash;
+                }
+                else
+                {
+                    MessageAndHash = messageField.Text + " " + null;
 
-                Hash = helper.HashCounter(messageField.Text);
-                hashField.Text = Hash;
-
-                MessageAndHash = messageField.Text + " " + Hash;
+                }
                 BitMessageAndHash = helper.MessageToByteArray(MessageAndHash);
                 if (ContainerSize >= BitMessageAndHash.Count)
                 {
-                    helper.InsertMessageToFile(FilePathStr, BitMessageAndHash);
+                    if(isHashNeed.IsChecked==true)
+                        helper.InsertMessageToFile(FilePathStr, BitMessageAndHash, true);
+                    else
+                        helper.InsertMessageToFile(FilePathStr, BitMessageAndHash, false);
                     if (isFileDoc)
                     {
                         helper.ConvertDocxToDoc(FilePathStr);
@@ -133,9 +145,17 @@ namespace WordSganography
                     string message = result.Substring(0, lastSpacePos);
                     string hash = result.Substring(lastSpacePos + 1, result.Length - lastSpacePos - 1);
                     outputMessageField.Text = message;
-                    outputHashField.Text = hash;
-                    controlHashField.Text = helper.HashCounter(message);
-                    statusField.Text += "Сообщение извлечено" + "\n";
+                    if (hash != "")
+                    {
+                        outputHashField.Text = hash;
+                        controlHashField.Text = helper.HashCounter(message);
+                        statusField.Text += "Сообщение извлечено" + "\n";
+                    }
+                    else
+                    {
+                        outputHashField.Text = "Hash не был извлечен/осажден";
+                        controlHashField.Text = helper.HashCounter(message);
+                    }
                 }
                 else
                 {
@@ -146,6 +166,16 @@ namespace WordSganography
             {
                 statusField.Text +=ex.Message + "\n";   
             }
+        }
+
+        private void IsHashNeed_Checked(object sender, RoutedEventArgs e)
+        {
+                hashField.IsEnabled = true;
+        }
+
+        private void IsHashNeed_Unchecked(object sender, RoutedEventArgs e)
+        {
+            hashField.IsEnabled = false;
         }
     }
 }
