@@ -22,7 +22,6 @@ namespace WordSganography
     public partial class MainWindow : Window
     {
         public static bool isFileDoc { get; set; }
-
         public static string FilePathStr { get; set; }
         public static string encodedFilePathStr { get; set; }
         public static string CopyPathStr { get; set; }
@@ -78,7 +77,10 @@ namespace WordSganography
             try
             {
                 statusField.Text = "";
-
+                if (FilePathStr == null)
+                {
+                    throw new Exception("Файл не выбран");
+                }
                 WordAsXML helper = new WordAsXML();
                 if (isHashNeed.IsChecked == true)
                 {
@@ -137,6 +139,10 @@ namespace WordSganography
         {
             try
             {
+                if (encodedFilePathStr == null)
+                {
+                    throw new Exception("Файл не выбран");
+                }
                 WordAsXML helper = new WordAsXML();
                 string result = helper.GetMessageFromFile(encodedFilePathStr);
                 if (result != null)

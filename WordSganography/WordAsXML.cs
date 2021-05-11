@@ -124,6 +124,7 @@ namespace WordSganography
 
             using (WordprocessingDocument doc = WordprocessingDocument.Open(FilePathStr, true))
             {
+                
                 Body mainPart = doc.MainDocumentPart.Document.Body;
                 var runs = mainPart.Descendants<Run>().ToList();
 
